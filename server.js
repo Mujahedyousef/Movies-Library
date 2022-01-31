@@ -2,7 +2,10 @@
 const express=require('express');
 
 const app=express();
-
+const axios=require('axios')
+const dotenv = require('dotenv');
+dotenv.config();
+const APIKEY = process.env.APIKEY;
 const dMovie= require('./Movie Data/data.json')
 
 function Movie(title,poster_path,overview ){
@@ -14,15 +17,22 @@ function Movie(title,poster_path,overview ){
 
 
 app.get("/",(req,res)=>{
-    let movie=new Movie(dMovie.title,dMovie.poster_path,dMovie.overview);
+    let movies = [];
+  moviesData.data.forEach((movie) => {
+    movie = new Movie(movie.title, movie.poster_path, movie.overview);
+    movies.push(movie);
+  });
+  return res.status(200).json(movies);
+});
 
-    res.status(200).json(movie);
-})
 
 app.get("/favorite",(req,res)=>{
     res.status(200).json("Welcome to Favorite Page")
 
 })
+
+
+
 
 app.use("*",(req,res)=>{
     res.status(404).send("Not Found!")

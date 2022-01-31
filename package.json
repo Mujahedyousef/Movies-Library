@@ -2,7 +2,7 @@
   "name": "movies-library",
   "version": "1.0.0",
   "description": "project movie app",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
@@ -19,8 +19,9 @@
   },
   "homepage": "https://github.com/Mujahedyousef/Movies-Library#readme",
   "dependencies": {
+    "axios": "^0.25.0",
     "cors": "^2.8.5",
+    "dotenv": "^15.0.0",
     "express": "^4.17.2"
-  },
-  "devDependencies": {}
+  }
 }
