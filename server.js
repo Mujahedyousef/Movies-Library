@@ -19,14 +19,16 @@ app.get("/",dataMovie)
 app.get("/favorite",(req,res)=>{
     res.status(200).json("Welcome to Favorite Page")
 
-})
-app.get("/trending",TrendingHandler)
-
-app.get("/search",searchMovie)
-app.get("/moviePopular",pagePopularMovie)
+});
+app.get("/trending",TrendingHandler);
+app.get("/search",searchMovie);
+app.get("/moviePopular",pagePopularMovie);
 app.post("/addfavariteMovie", addMovies);
 app.get("/getfavariteMovie", getAllFavariteMovies);
-
+app.put("/updateInfMovie/:id",updateInfMovie);
+app.delete("/deletInfMovie/:id",deletInfMovie);
+app.get("/getInfMovie/id",getInfMovie)
+app.use(express.json());
 app.use(errorHandler);
 
 
@@ -125,6 +127,41 @@ client.query(sql).then(data => {
   errorHandler(error, req,res);
 })
 };
+
+ function updateInfMovie (req,res){
+const id =req.params.id ;
+const movie=req.body ;
+const sql=`UPDATE favariteMovie SET title=$1, release_date=$2, poster_path=$3, overview=$4 WHERE id=${id} * RETARNING `;
+const values=[movie.title, movie.release_date, movie.poster_path, movie.overview ];
+client.query(sql,values).then(data=>{
+   res.status(200).json(data.rows);
+
+}).catch(err=>{
+  errorHandler (err,req.res);
+})
+ }
+
+ function deletInfMovie(req,res){
+   const id=req.params.id ;
+   const sql=`DELETE FROM favariteMovie WHERE id=${id} `;
+   client.query(sql).then(()=>{
+     return res.status(204).json([]);
+   }).catch(err=>{
+     errorHandler (err,req.res);
+   })
+ }
+
+ function getInfMovie(req,res){
+   const id=req.params.id ;
+   const sql=`SELECT * FROM favariteMovie WHERE id=${id}`;
+   client.query(sql).then(data=>{
+
+res.status(200).json(data.rows)
+   }).catch(err=>{
+    errorHandler (err,req.res);
+  })
+  
+ }
 
 
 
