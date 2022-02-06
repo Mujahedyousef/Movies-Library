@@ -21,4 +21,3 @@
 #  Project Features
 
 > * the app allowing to the client to show any movie and show all information for it .
-> * On the second day, the app allows the user to get any movies and search about them. 
