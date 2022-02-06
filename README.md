@@ -15,16 +15,21 @@
 * Import express library.
 * Const app=express();
 * Write listen function.
-* Can get any data. 
+* Can get any data.
 * npm install axios dotenv.
 * get API from website.
 * make .env and write {API_KEY ,PORT}.
+* Knowing types of databases.
+* npm i pg.
+* DATABASE_URL.
+* creating database && creating tables data && know some lines to connect with code.
+
+* Knowing new method (post).
 
 # Project Features
 
->1) the app allowing to the client to show any movie and show all information for it .
+> * The app allowing to the client to show any movie and show all information for it .
+ 
+> * On the second day, the app allows the user to get any movies and search about them. 
 
-
->2) the app allowing to the client to show any movie and show all information for it .
-
-
+> * On the third day, the app has a special database we can add any information inside.

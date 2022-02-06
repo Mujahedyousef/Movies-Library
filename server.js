@@ -9,17 +9,21 @@ const app=express();
 //========================2)import and make variable ==========================
 const axios=require('axios');
 const dotenv = require('dotenv');
- dotenv.config();
- const APIKEY=process.env.APIKEY;
-const PORT=process.env.PORT;
 
+const pg=require('pg'); //import pgPostgress
+dotenv.config();
+const DATABASE_URL=process.env.DATABASE_URL;
+const client=new pg.Client(DATABASE_URL);//connected node.js to pg.
+const APIKEY=process.env.APIKEY;
+const PORT=process.env.PORT;
+app.use(express.json());
 //========================3)import data.json===================================
 
 const dMovie= require('./Movie Data/data.json');
-const { handle } = require('express/lib/application');
+
 
  //=======================make a constructor to movie==========================
-function dataMovie( id,title,release_date,poster_path,overview ){
+function dataMovie( id, title, release_date, poster_path, overview ){
   this.id=id,
 this.title=title,
  this.poster_path=release_date,
@@ -47,7 +51,13 @@ app.get("/favorite",(req,res)=>{
 app.get("/trending",getTrendingFunc);
 app.get("/search",getsearchFunc);
 app.get("/popular",pagePopularMovie);
-//===================================2)use method===============================
+app.get("/movieInDatabase",getAllFavariteMovies);
+//===================================2)Post Method==============================
+
+app.post("/addMovie",addMovieFunc);
+
+
+//===================================3)use method===============================
 
 //==============================include Handel Error and status=================
 
@@ -103,6 +113,29 @@ function pagePopularMovie(req,res){
   });
  };
 
+ function getAllFavariteMovies(req,res){
+   const sql=`SELECT * FROM favariteMovie`;
+   client.query(sql).then(data=> {
+    return res.status(200).json(data.rows);
+  }).catch(err => {
+    handlError(err, req,res);
+  })
+  };
+ 
+
+//==============================Function post===================================
+
+function addMovieFunc(req,res){
+let infAddMovie=req.body;
+const sql=`INSERT INTO favariteMovie (title, release_date, poster_path, overview) VALUS($1,$2,$3,$4) RETURNING *`;
+let infAdd=[infAddMovie.title,infAddMovie.release_date,infAddMovie.poster_path,infAddMovie.overview];
+client.query(sql,infAdd).then(data=>{
+  return res.status(201).json(data.rows);
+}).catch(err => {
+  handlError(err, req, res);
+})
+}
+
 
 //===============function HandleError===========================================
 
@@ -115,34 +148,13 @@ function handlError (err,req,res){
 
 
 //=================3)Method listen for turn on the server an connection=========
-app.listen(PORT, ()=>{
-console.log(`Server are working on http://localhost:${PORT}`)
 
+client.connect().then(()=>{
+
+  app.listen(PORT, ()=>{
+    console.log(`Server are working on http://localhost:${PORT}`)
+})
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
