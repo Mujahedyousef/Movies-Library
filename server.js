@@ -9,7 +9,6 @@ const app=express();
 //========================2)import and make variable ==========================
 const axios=require('axios');
 const dotenv = require('dotenv');
-
 const pg=require('pg'); //import pgPostgress
 dotenv.config();
 const DATABASE_URL=process.env.DATABASE_URL;
@@ -35,7 +34,7 @@ this.overview=overview
 
 //=============================All method in express===========================
 //===================================1)get method==============================
-// use method especially to app called get(path,(function or callback(params)))
+// use method especially to app called get(path,(function or callback(param)))
 
 app.get("/",(req,res)=>{
     let movie=new Movie(dMovie.title,dMovie.poster_path,dMovie.overview);
@@ -52,12 +51,23 @@ app.get("/trending",getTrendingFunc);
 app.get("/search",getsearchFunc);
 app.get("/popular",pagePopularMovie);
 app.get("/movieInDatabase",getAllFavariteMovies);
+app.get("getMovieFromSchema/id",getMovieById)
 //===================================2)Post Method==============================
+//================================use to add data===============================
 
 app.post("/addMovie",addMovieFunc);
 
+//===================================3)Put Method===============================
+//================================use to update data============================
+app.put("/updateInfMovie/id",updateInfMovieFunc);
 
-//===================================3)use method===============================
+
+//===================================4)Delete Method============================
+//================================use to delete data============================
+
+app.delete("/deleteInfMovie/id",deleteInfMovieFunc);
+
+//===================================5)use method===============================
 
 //==============================include Handel Error and status=================
 
@@ -121,7 +131,17 @@ function pagePopularMovie(req,res){
     handlError(err, req,res);
   })
   };
- 
+
+function getMovieById(req,res){
+  const id=req.params.id;
+  const sql=`SELECT * FROM favariteMovie WHERE id=${id}`;
+  client.query(sql).then(data=>{
+
+res.status(200).json(data.rows)
+  }).catch(err=>{
+    handlError (err,req.res);
+ })
+}
 
 //==============================Function post===================================
 
@@ -134,10 +154,33 @@ client.query(sql,infAdd).then(data=>{
 }).catch(err => {
   handlError(err, req, res);
 })
-}
+};
+//==============================Function put====================================
 
+function updateInfMovieFunc(req,res){
+const id=req.params.id;
+const updateDataMovie=req.body;
+const sql=`UPDATE favariteMovie SET (title=$1, release_date=$2, poster_path=$3, overview=$4) WHERE id=${id} RETURNING *`;
+const values=[updateDataMovie.title,updateDataMovie.release_date,updateDataMovie.poster_path,updateDataMovie.overview];
+client.query(sql,values).then(data=>{
+  res.status(200).json(data.rows);
+}).catch(err=>{
+  handlError (err,req.res);
+})
+};
 
-//===============function HandleError===========================================
+//==============================Function delete=================================
+
+function deleteInfMovieFunc(req,res){
+  const id=req.params.id;
+  const sql=`DELETE FROM favariteMovie WHERE id=${id}`;
+  client.query(sql).then(()=>{
+    return res.status(204).json([]);
+  }).catch(err=>{
+    handlError (err,req,res)
+  })
+};
+//==============================Function HandleError============================
 
 function handlError (err,req,res){
   console.log("Sorry, the page Not Found.");
@@ -147,7 +190,7 @@ function handlError (err,req,res){
 
 
 
-//=================3)Method listen for turn on the server an connection=========
+//=================*)Method listen for turn on the server an connection=========
 
 client.connect().then(()=>{
 
@@ -155,7 +198,6 @@ client.connect().then(()=>{
     console.log(`Server are working on http://localhost:${PORT}`)
 })
 });
-
 
 
 
