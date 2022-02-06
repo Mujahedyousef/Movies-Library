@@ -24,4 +24,7 @@
 
 >1) the app allowing to the client to show any movie and show all information for it .
 
+
 >2) the app allowing to the client to show any movie and show all information for it .
+
+
