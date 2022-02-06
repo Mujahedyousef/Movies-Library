@@ -18,3 +18,6 @@
 *  Write listen function.
 * Can get any data. 
 
+#  Project Features
+
+>the app allowing to the client to show any movie and show all information for it .
