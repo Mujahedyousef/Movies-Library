@@ -1,19 +1,18 @@
 //Use this to shown me any problem
 "use strict";
-//=======================All import and var====================================
+//=======================All import and var===================================
 
-//=======1)imoprt module framework (express) from node_modules=================
+//=======1)imoprt module framework (express) from node_modules================
 const express=require('express');
 const app=express();
-
-//========================2)import and make variable ==========================
+//========================2)import and make variable =========================
 const axios=require('axios');
 const dotenv = require('dotenv');
 app.use(express.json());
 const pg=require('pg'); //import pgPostgress
 dotenv.config();
 // const DATABASE_URL=process.env.DATABASE_URL;
-// const client=new pg.Client(DATABASE_URL);//connected node.js to pg.
+//  const client=new pg.Client(DATABASE_URL);//connected node.js to pg.
 const client = new pg.Client({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -25,9 +24,7 @@ const PORT=process.env.PORT;
 //========================3)import data.json===================================
 
 const dMovie= require('./Movie Data/data.json');
-
-
- //=======================make a constructor to movie==========================
+//=======================make a constructor to movie==========================
 function dataMovie( id, title, release_date, poster_path, overview ){
   this.id=id,
 this.title=title,
@@ -35,24 +32,18 @@ this.title=title,
 this.poster_path=poster_path,
 this.overview=overview
 };
-
-
-
 //=============================All method in express===========================
 //===================================1)get method==============================
 // use method especially to app called get(path,(function or callback(param)))
-
 app.get("/",(req,res)=>{
     let movie=new dataMovie(dMovie.title,dMovie.poster_path,dMovie.overview);
 //The information is returned to the client and shown when sending the req to the path.
     res.status(200).json(movie);
 });
-
 app.get("/favorite",(req,res)=>{
     res.status(200).json("Welcome to Favorite Page")
 
 });
-
 app.get("/trending",getTrendingFunc);
 app.get("/search",getsearchFunc);
 app.get("/popular",pagePopularMovie);
@@ -60,9 +51,7 @@ app.get("/movieInDatabase",getAllFavariteMovies);
 app.get("/getMovieFromSchema/:id",getMovieById)
 //===================================2)Post Method==============================
 //================================use to add data===============================
-
 app.post("/addMovie",addMovieFunc);
-
 //===================================3)Put Method===============================
 //================================use to update data============================
 app.put("/updateInfMovie/:id",updateInfMovieFunc);
@@ -90,7 +79,6 @@ app.get("*", (req,res)=>{
 
 
 //==============================Functions get from API==========================
-
 function getTrendingFunc (req,res){
   let infTrendingMovies=[];
   axios.get(`https://api.themoviedb.org/3/trending/all/day?api_key=${APIKEY}&language=en-US'`).then(value=>{
@@ -104,7 +92,6 @@ function getTrendingFunc (req,res){
     errorHandler (error,req,res)
   })
 };
-
 function getsearchFunc(req,res){
   let searchQuery=req.query.search;
   let arraySearch=[];
@@ -118,7 +105,6 @@ return res.status(200).json(arraySearch);
     errorHandler (error,req,res)
   })
 };
-
 function pagePopularMovie(req,res){
   let popularMovie=[];
   axios.get(`https://api.themoviedb.org/3/movie/popular?api_key=${APIKEY}&language=en-US&page=1
@@ -130,8 +116,7 @@ function pagePopularMovie(req,res){
     errorHandler (error,req,res)
   })
  };
-
- function getAllFavariteMovies(req,res){
+function getAllFavariteMovies(req,res){
    const sql=`SELECT * FROM favariteMovie`;
    client.query(sql).then(data=> {
     return res.status(200).json(data.rows);
@@ -139,7 +124,6 @@ function pagePopularMovie(req,res){
     errorHandler (error,req,res)
   })
   };
-
 function getMovieById(req,res){
   const id=req.params.id;
   const sql=`SELECT * FROM favariteMovie WHERE id=${id}`;
@@ -150,9 +134,7 @@ res.status(200).json(data.rows)
     errorHandler (error,req,res)
   })
 }
-
 //==============================Function post===================================
-
 function addMovieFunc(req,res){
 let infAddMovie=req.body;
 const sql=`INSERT INTO favariteMovie (title, release_date, poster_path, overview) VALUES($1,$2,$3,$4) RETURNING *`;
@@ -164,7 +146,6 @@ client.query(sql,infAdd).then(data=>{
 })
 };
 //==============================Function put====================================
-
 function updateInfMovieFunc(req,res){
 const id=req.params.id;
 const updateDataMovie=req.body;
@@ -176,9 +157,7 @@ client.query(sql,values).then(data=>{
   errorHandler (error,req,res)
 })
 };
-
 //==============================Function delete=================================
-
 function deleteInfMovieFunc(req,res){
   const id=req.params.id;
   const sql=`DELETE FROM favariteMovie WHERE id=${id}`;
@@ -202,13 +181,9 @@ function errorHandler(error, req, res){
 
 
 //=================*)Method listen for turn on the server an connection=========
-
 client.connect().then(()=>{
 
   app.listen(PORT, ()=>{
     console.log(`Server are working on http://localhost:${PORT}`)
 })
 });
-
-
-
