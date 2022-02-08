@@ -9,13 +9,19 @@ const app=express();
 //========================2)import and make variable ==========================
 const axios=require('axios');
 const dotenv = require('dotenv');
+app.use(express.json());
 const pg=require('pg'); //import pgPostgress
 dotenv.config();
-const DATABASE_URL=process.env.DATABASE_URL;
-const client=new pg.Client(DATABASE_URL);//connected node.js to pg.
+// const DATABASE_URL=process.env.DATABASE_URL;
+// const client=new pg.Client(DATABASE_URL);//connected node.js to pg.
+const client = new pg.Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
 const APIKEY=process.env.APIKEY;
 const PORT=process.env.PORT;
-app.use(express.json());
+
 //========================3)import data.json===================================
 
 const dMovie= require('./Movie Data/data.json');
@@ -37,7 +43,7 @@ this.overview=overview
 // use method especially to app called get(path,(function or callback(param)))
 
 app.get("/",(req,res)=>{
-    let movie=new Movie(dMovie.title,dMovie.poster_path,dMovie.overview);
+    let movie=new dataMovie(dMovie.title,dMovie.poster_path,dMovie.overview);
 //The information is returned to the client and shown when sending the req to the path.
     res.status(200).json(movie);
 });
@@ -51,7 +57,7 @@ app.get("/trending",getTrendingFunc);
 app.get("/search",getsearchFunc);
 app.get("/popular",pagePopularMovie);
 app.get("/movieInDatabase",getAllFavariteMovies);
-app.get("getMovieFromSchema/id",getMovieById)
+app.get("/getMovieFromSchema/:id",getMovieById)
 //===================================2)Post Method==============================
 //================================use to add data===============================
 
@@ -59,27 +65,29 @@ app.post("/addMovie",addMovieFunc);
 
 //===================================3)Put Method===============================
 //================================use to update data============================
-app.put("/updateInfMovie/id",updateInfMovieFunc);
+app.put("/updateInfMovie/:id",updateInfMovieFunc);
 
 
 //===================================4)Delete Method============================
 //================================use to delete data============================
 
-app.delete("/deleteInfMovie/id",deleteInfMovieFunc);
+app.delete("/deleteInfMovie/:id",deleteInfMovieFunc);
 
 //===================================5)use method===============================
 
 //==============================include Handel Error and status=================
 
 //=========================1)status(500)Internal Server Error=================== 
-app.use(function (err,req,res){
-    console.log("Sorry, something went wrong");
-
-res.status(500).json("Sorry, something went wrong");
-});
+ app.use(function (err,req,res,next){
+    
+ res.status(500).json("Sorry, something went wrong");
+ });
 
 //=========================2)status(404)Not Found===============================
-app.use("*",handlError);
+app.get("*", (req,res)=>{
+  res.status(404).send("The page is NotFound");
+});
+
 
 //==============================Functions get from API==========================
 
@@ -88,26 +96,26 @@ function getTrendingFunc (req,res){
   axios.get(`https://api.themoviedb.org/3/trending/all/day?api_key=${APIKEY}&language=en-US'`).then(value=>{
     value.data.results.forEach(trendingData=>{
       let trendingMovies=new dataMovie (trendingData.id,trendingData.title,trendingData.release_date,trendingData.poster_path,trendingData.overview);
-      infTrendingMovies.push(trendingMovie) 
+      infTrendingMovies.push(trendingMovies) 
     })
     return res.status(200).json(infTrendingMovies);
     
-  }).catch(err=>{
-   handlError(err,req,res)
+  }).catch(error=>{
+    errorHandler (error,req,res)
   })
 };
 
 function getsearchFunc(req,res){
   let searchQuery=req.query.search;
   let arraySearch=[];
-  axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${APIKEY}&language=en-US&query=${searchQuery}page=1`).then(value=>{
+  axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${APIKEY}&language=en-US&query=${searchQuery}&page=1`).then(value=>{
     value.data.results.forEach(searching=>{
       let searchMovies=new dataMovie(searching.id,searching.title,searching.release_date,searching.poster_path,searching.overview);
       arraySearch.push(searchMovies);
     })
 return res.status(200).json(arraySearch);
-  }).catch(err=>{
-    handlError(err,req,res)
+  }).catch(error=>{
+    errorHandler (error,req,res)
   })
 };
 
@@ -118,17 +126,17 @@ function pagePopularMovie(req,res){
   value.data.results.forEach(popular =>{
     popularMovie.push(popular);});
   return res.status(200).json(popularMovie);
-  }).catch(err => {
-      errorHandler(err, req,res);
-  });
+  }).catch(error=>{
+    errorHandler (error,req,res)
+  })
  };
 
  function getAllFavariteMovies(req,res){
    const sql=`SELECT * FROM favariteMovie`;
    client.query(sql).then(data=> {
     return res.status(200).json(data.rows);
-  }).catch(err => {
-    handlError(err, req,res);
+  }).catch(error=>{
+    errorHandler (error,req,res)
   })
   };
 
@@ -138,21 +146,21 @@ function getMovieById(req,res){
   client.query(sql).then(data=>{
 
 res.status(200).json(data.rows)
-  }).catch(err=>{
-    handlError (err,req.res);
- })
+  }).catch(error=>{
+    errorHandler (error,req,res)
+  })
 }
 
 //==============================Function post===================================
 
 function addMovieFunc(req,res){
 let infAddMovie=req.body;
-const sql=`INSERT INTO favariteMovie (title, release_date, poster_path, overview) VALUS($1,$2,$3,$4) RETURNING *`;
+const sql=`INSERT INTO favariteMovie (title, release_date, poster_path, overview) VALUES($1,$2,$3,$4) RETURNING *`;
 let infAdd=[infAddMovie.title,infAddMovie.release_date,infAddMovie.poster_path,infAddMovie.overview];
 client.query(sql,infAdd).then(data=>{
   return res.status(201).json(data.rows);
-}).catch(err => {
-  handlError(err, req, res);
+}).catch(error=>{
+  errorHandler (error,req,res)
 })
 };
 //==============================Function put====================================
@@ -160,12 +168,12 @@ client.query(sql,infAdd).then(data=>{
 function updateInfMovieFunc(req,res){
 const id=req.params.id;
 const updateDataMovie=req.body;
-const sql=`UPDATE favariteMovie SET (title=$1, release_date=$2, poster_path=$3, overview=$4) WHERE id=${id} RETURNING *`;
+const sql=`UPDATE favariteMovie SET title=$1, release_date=$2, poster_path=$3, overview=$4 WHERE id=${id} RETURNING *;`
 const values=[updateDataMovie.title,updateDataMovie.release_date,updateDataMovie.poster_path,updateDataMovie.overview];
 client.query(sql,values).then(data=>{
   res.status(200).json(data.rows);
-}).catch(err=>{
-  handlError (err,req.res);
+}).catch(error=>{
+  errorHandler (error,req,res)
 })
 };
 
@@ -176,18 +184,21 @@ function deleteInfMovieFunc(req,res){
   const sql=`DELETE FROM favariteMovie WHERE id=${id}`;
   client.query(sql).then(()=>{
     return res.status(204).json([]);
-  }).catch(err=>{
-    handlError (err,req,res)
+  }).catch(error=>{
+    errorHandler (error,req,res)
   })
 };
 //==============================Function HandleError============================
 
-function handlError (err,req,res){
-  console.log("Sorry, the page Not Found.");
-  res.status(404).json("Sorry, the page Not Found.");
-  
-}
 
+
+function errorHandler(error, req, res){
+  const err = {
+      status : 500,
+      message : error.message
+  }
+  res.send(err)
+}
 
 
 //=================*)Method listen for turn on the server an connection=========
